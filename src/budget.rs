@@ -90,8 +90,9 @@ impl Money {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct MoneyFlow {
+    pub name: String,
     pub amount: Money,
     pub when: When,
 }
