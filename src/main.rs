@@ -35,21 +35,23 @@ async fn sync_transactions(config: &Configuration, budget_id: &str, db: &Db) -> 
         bincode::serialize(&response.data.server_knowledge)?,
     )?;
 
-    println!("🔄 Syncing transactions...");
+    log::info!("🔄 Syncing transactions...");
 
     for txn in response.data.transactions {
-        println!("🔄 txn:{}", txn.id);
+        log::info!("🔄 txn:{}", txn.id);
         let key = format!("txn:{}", txn.id);
         db.insert(key, bincode::serialize(&txn)?)?;
     }
 
-    println!("✅ Syncing transactions complete.");
+    log::info!("✅ Syncing transactions complete.");
 
     Ok(())
 }
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    env_logger::init();
+
     dotenv()?;
 
     let db = sled::open("db").expect("⚠️ Failed to open database");
@@ -115,9 +117,9 @@ async fn shutdown_signal(db: Db) {
         _ = terminate => {},
     }
 
-    println!("🔄 Flushing database before shutdown...");
+    log::info!("🔄 Flushing database before shutdown...");
     if let Err(e) = db.flush() {
-        eprintln!("⚠️ Failed to flush database: {}", e);
+        log::error!("⚠️ Failed to flush database: {}", e);
     }
-    println!("✅ Database shutdown complete.");
+    log::info!("✅ Database shutdown complete.");
 }
