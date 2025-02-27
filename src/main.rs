@@ -1,7 +1,7 @@
 use std::{env, time::Duration};
 
 use anyhow::Result;
-use axum::{routing::get, Router};
+use axum::{extract::State, routing::get, Router};
 use dotenv::dotenv;
 use sled::Db;
 use tokio::signal;
@@ -18,12 +18,22 @@ fn list_transactions(db: &Db) -> impl Iterator<Item = TransactionDetail> {
 }
 
 async fn sync_transactions(config: &Configuration, budget_id: &str, db: &Db) -> Result<()> {
-    // TODO: Check the db for the txn server knowledge number.
-    // TODO: If it is present then include it in the request.
-    // TODO: Make sure to update the server knowledge number.
+    // Get the saved server_knowledge.
+    let server_knowledge: Option<i64> = db
+        .get("txn-server-knowledge")
+        .ok()
+        .flatten()
+        .map(|x| bincode::deserialize(&x).unwrap());
 
     let response =
-        apis::transactions_api::get_transactions(config, budget_id, None, None, None).await?;
+        apis::transactions_api::get_transactions(config, budget_id, None, None, server_knowledge)
+            .await?;
+
+    // Update the server knowledge.
+    db.insert(
+        "txn-server-knowledge",
+        bincode::serialize(&response.data.server_knowledge)?,
+    )?;
 
     for txn in response.data.transactions {
         let key = format!("txn:{}", txn.id);
@@ -37,23 +47,31 @@ async fn sync_transactions(config: &Configuration, budget_id: &str, db: &Db) -> 
 async fn main() -> Result<()> {
     dotenv()?;
 
-    let db = sled::open("db").expect("Failed to open database");
+    let db = sled::open("db").expect("⚠️ Failed to open database");
     let ynab_access_token = env::var("YNAB_ACCESS_TOKEN")?;
     let ynab_budget_id = env::var("YNAB_BUDGET_ID")?;
 
-    let mut config = Configuration::new();
-    config.bearer_access_token = Some(ynab_access_token);
+    tokio::spawn({
+        let db = db.clone();
 
-    // TODO: Create a background thread for syncing data.
-    // sync_transactions(&config, &ynab_budget_id, &db).await?;
+        async move {
+            let mut config = Configuration::new();
+            config.bearer_access_token = Some(ynab_access_token);
 
-    for txn in list_transactions(&db) {
-        println!("{:?}", txn);
-    }
+            loop {
+                sync_transactions(&config, &ynab_budget_id, &db)
+                    .await
+                    .unwrap();
+
+                tokio::time::sleep(Duration::from_secs(10 * 60)).await;
+            }
+        }
+    });
 
     let app = Router::new()
         .route("/", get(root))
-        .layer(TimeoutLayer::new(Duration::from_secs(10)));
+        .layer(TimeoutLayer::new(Duration::from_secs(10)))
+        .with_state(db.clone());
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await?;
 
@@ -64,8 +82,9 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-async fn root() -> &'static str {
-    "Hello, world!"
+async fn root(State(db): State<Db>) -> String {
+    let txns = list_transactions(&db).collect::<Vec<_>>();
+    serde_json::to_string_pretty(&txns).unwrap()
 }
 
 async fn shutdown_signal(db: Db) {

@@ -1378,6 +1378,7 @@ dependencies = [
  "dotenv",
  "reqwest",
  "serde",
+ "serde_json",
  "sled",
  "tokio",
  "tower-http",
