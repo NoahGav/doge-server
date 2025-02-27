@@ -91,7 +91,7 @@ async fn main() -> Result<()> {
 
 async fn root(State(db): State<Db>) -> String {
     let txns = list_transactions(&db).collect::<Vec<_>>();
-    serde_json::to_string_pretty(&txns).unwrap()
+    serde_json::to_string(&txns).unwrap()
 }
 
 async fn shutdown_signal(db: Db) {
