@@ -1,174 +1,10 @@
-// use chrono::{Duration, Months, NaiveDate, Weekday};
-// use server::budget::{Money, MoneyFlow, When};
-
-// fn main() {
-//     let flows = [
-//         MoneyFlow {
-//             name: "VA".to_string(),
-//             amount: Money::dollars(4044.00),
-//             when: When::FederalPaycheck(1),
-//         },
-//         MoneyFlow {
-//             name: "SSA Dad".to_string(),
-//             amount: Money::dollars(1365.00),
-//             when: When::FederalPaycheck(3),
-//         },
-//         MoneyFlow {
-//             name: "SSA Mom".to_string(),
-//             amount: Money::dollars(756.00),
-//             when: When::FederalPaycheck(3),
-//         },
-//         MoneyFlow {
-//             name: "USPS".to_string(),
-//             amount: Money::dollars(2450.0),
-//             when: When::EveryTwoWeeks(NaiveDate::from_ymd_opt(2025, 2, 26).unwrap()),
-//         },
-//         MoneyFlow {
-//             name: "Mortgage".to_string(),
-//             amount: Money::dollars(-1660.70),
-//             when: When::SpecificDay(1),
-//         },
-//         MoneyFlow {
-//             name: "Ferrel Gas".to_string(),
-//             amount: Money::dollars(-330.00),
-//             when: When::SpecificDay(1),
-//         },
-//         MoneyFlow {
-//             name: "Student Loan".to_string(),
-//             amount: Money::dollars(-157.00),
-//             when: When::SpecificDay(1),
-//         },
-//         MoneyFlow {
-//             name: "Storage".to_string(),
-//             amount: Money::dollars(-90.00),
-//             when: When::SpecificDay(1),
-//         },
-//         MoneyFlow {
-//             name: "Internet".to_string(),
-//             amount: Money::dollars(-170.0),
-//             when: When::SpecificDay(5),
-//         },
-//         MoneyFlow {
-//             name: "BENEFEDS".to_string(),
-//             amount: Money::dollars(-20.00),
-//             when: When::SpecificDay(7),
-//         },
-//         MoneyFlow {
-//             name: "Trash".to_string(),
-//             amount: Money::dollars(-63.00),
-//             when: When::SpecificDay(10),
-//         },
-//         MoneyFlow {
-//             name: "AT&T".to_string(),
-//             amount: Money::dollars(-610.00),
-//             when: When::SpecificDay(22),
-//         },
-//         MoneyFlow {
-//             name: "Electricity".to_string(),
-//             amount: Money::dollars(-500.00),
-//             when: When::SpecificDay(22),
-//         },
-//         MoneyFlow {
-//             name: "OneMain Loan".to_string(),
-//             amount: Money::dollars(-340.00),
-//             when: When::SpecificDay(10),
-//         },
-//         MoneyFlow {
-//             name: "Hilux Payment".to_string(),
-//             amount: Money::dollars(-740.00),
-//             when: When::LastDayOfMonth,
-//         },
-//         MoneyFlow {
-//             name: "Progressive".to_string(),
-//             amount: Money::dollars(-592.00),
-//             when: When::SpecificDay(4),
-//         },
-//         MoneyFlow {
-//             name: "USAA Insurance".to_string(),
-//             amount: Money::dollars(-128.21),
-//             when: When::SpecificDay(3),
-//         },
-//         MoneyFlow {
-//             name: "Groceries".to_string(),
-//             amount: Money::dollars(-300.00),
-//             when: When::EveryWeekday(Weekday::Wed),
-//         },
-//         MoneyFlow {
-//             name: "Commodities".to_string(),
-//             amount: Money::dollars(-100.00),
-//             when: When::EveryWeekday(Weekday::Wed),
-//         },
-//         MoneyFlow {
-//             name: "Dad's Gas".to_string(),
-//             amount: Money::dollars(-31.15),
-//             when: When::EveryDay,
-//         },
-//     ];
-
-//     let mut date = NaiveDate::from_ymd_opt(2025, 2, 28).unwrap();
-//     let end_date = date + Months::new(6);
-//     let mut money = Money::dollars(5489.51);
-
-//     while date < end_date {
-//         let mut changes = Vec::new();
-
-//         for flow in &flows {
-//             if flow.when.matches(date) {
-//                 money.add(flow.amount);
-//                 changes.push(format!("{} for {}", flow.amount, flow.name));
-//             }
-//         }
-
-//         if !changes.is_empty() {
-//             println!("{date}({}):", money);
-
-//             for change in changes {
-//                 println!("\t{}", change);
-//             }
-//         }
-
-//         date += Duration::days(1);
-//     }
-// }
-
-// TODO: Need reconciliation with actual transactions.
-// TODO: For example, since dad's gas is expected everyday, when we get transactions that are identified
-// TODO: for gas stations, we need to correlate that to the actual transactions for that day in the db.
-// TODO: Remember that transactions don't normally show up for 24 hours. So, say he actually spent $35
-// TODO: instead of the estimated $31.15, then for the future when doing these simulations the actual
-// TODO: amount of $35 should be used. If a transaction is never seen or a transaction is way outside
-// TODO: of the parameters or if a transaction causes a negative balance in the future, it needs to be
-// TODO: flagged and a notification sent to our phones.
-
-// use chrono::{Duration, NaiveDate};
-// use server::budget::When;
-
-// fn main() {
-//     let rule1 = When::SpecificDay(1);
-//     let rule2 = When::LastDayOfMonth;
-//     let rule3 = When::EveryTwoWeeks(NaiveDate::from_ymd_opt(2025, 2, 26).unwrap());
-//     let rule4 = When::FederalPaycheck(1);
-
-//     let mut date = NaiveDate::from_ymd_opt(2025, 2, 1).unwrap();
-//     let end_date = NaiveDate::from_ymd_opt(2025, 4, 1).unwrap();
-
-//     while date < end_date {
-//         println!("{}", date);
-//         println!("rule1: {}", rule1.matches(date));
-//         println!("rule2: {}", rule2.matches(date));
-//         println!("rule3: {}", rule3.matches(date));
-//         println!("rule4: {}", rule4.matches(date));
-//         date += Duration::days(1);
-//     }
-// }
-
 use std::{env, time::Duration};
 
 use anyhow::Result;
 use axum::{
     extract::State,
     routing::{get, get_service},
-    Router,
+    Json, Router,
 };
 use dotenv::dotenv;
 use sled::Db;
@@ -180,13 +16,50 @@ use tower_http::{
 };
 use ynab_rs::{
     apis::{self, configuration::Configuration},
-    models::TransactionDetail,
+    models::{Account, TransactionDetail},
 };
+
+fn list_accounts(db: &Db) -> impl Iterator<Item = Account> {
+    db.scan_prefix("acct:")
+        .filter_map(|x| x.ok())
+        .map(|(_key, value)| bincode::deserialize(&value).unwrap())
+}
 
 fn list_transactions(db: &Db) -> impl Iterator<Item = TransactionDetail> {
     db.scan_prefix("txn:")
         .filter_map(|x| x.ok())
         .map(|(_key, value)| bincode::deserialize(&value).unwrap())
+}
+
+async fn sync_accounts(config: &Configuration, budget_id: &str, db: &Db) -> Result<()> {
+    // Get the saved server_knowledge.
+    let server_knowledge: Option<i64> = db
+        .get("acct-server-knowledge")
+        .ok()
+        .flatten()
+        .map(|x| bincode::deserialize(&x).unwrap());
+
+    let response = apis::accounts_api::get_accounts(config, budget_id, server_knowledge)
+        .await
+        .unwrap();
+
+    // Update the server knowledge.
+    db.insert(
+        "acct-server-knowledge",
+        bincode::serialize(&response.data.server_knowledge)?,
+    )?;
+
+    log::info!("🔄 Syncing accounts...");
+
+    for account in response.data.accounts {
+        log::info!("🔄 acct:{}", account.id);
+        let key = format!("acct:{}", account.id);
+        db.insert(key, bincode::serialize(&account)?)?;
+    }
+
+    log::info!("✅ Syncing accounts complete.");
+
+    Ok(())
 }
 
 async fn sync_transactions(config: &Configuration, budget_id: &str, db: &Db) -> Result<()> {
@@ -238,6 +111,8 @@ async fn main() -> Result<()> {
             config.bearer_access_token = Some(ynab_access_token);
 
             loop {
+                sync_accounts(&config, &ynab_budget_id, &db).await.unwrap();
+
                 sync_transactions(&config, &ynab_budget_id, &db)
                     .await
                     .unwrap();
@@ -253,6 +128,7 @@ async fn main() -> Result<()> {
         .allow_headers(Any);
 
     let api = Router::new()
+        .route("/accounts", get(accounts))
         .route("/transactions", get(transactions))
         .layer(cors);
 
@@ -271,9 +147,16 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-async fn transactions(State(db): State<Db>) -> String {
+// TODO: Need a way to login so the site isn't exposed directly to the public.
+
+async fn accounts(State(db): State<Db>) -> Json<Vec<Account>> {
+    let accounts = list_accounts(&db).collect::<Vec<_>>();
+    Json(accounts)
+}
+
+async fn transactions(State(db): State<Db>) -> Json<Vec<TransactionDetail>> {
     let txns = list_transactions(&db).collect::<Vec<_>>();
-    serde_json::to_string(&txns).unwrap()
+    Json(txns)
 }
 
 async fn shutdown_signal(db: Db) {
