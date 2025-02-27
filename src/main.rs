@@ -35,10 +35,15 @@ async fn sync_transactions(config: &Configuration, budget_id: &str, db: &Db) -> 
         bincode::serialize(&response.data.server_knowledge)?,
     )?;
 
+    println!("🔄 Syncing transactions...");
+
     for txn in response.data.transactions {
+        println!("🔄 txn:{}", txn.id);
         let key = format!("txn:{}", txn.id);
         db.insert(key, bincode::serialize(&txn)?)?;
     }
+
+    println!("✅ Syncing transactions complete.");
 
     Ok(())
 }
