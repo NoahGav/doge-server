@@ -75,8 +75,13 @@ async fn main() -> Result<()> {
         }
     });
 
+    let api_router = Router::new().route("/transactions", get(transactions));
+
+    let static_router = Router::new().route("/", get(root));
+
     let app = Router::new()
-        .route("/", get(root))
+        .nest("/api", api_router)
+        .merge(static_router)
         .layer(TimeoutLayer::new(Duration::from_secs(10)))
         .with_state(db.clone());
 
@@ -89,7 +94,11 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-async fn root(State(db): State<Db>) -> String {
+async fn root() -> &'static str {
+    "Hello, world!"
+}
+
+async fn transactions(State(db): State<Db>) -> String {
     let txns = list_transactions(&db).collect::<Vec<_>>();
     serde_json::to_string(&txns).unwrap()
 }
@@ -123,3 +132,6 @@ async fn shutdown_signal(db: Db) {
     }
     log::info!("✅ Database shutdown complete.");
 }
+
+// TODO: Clean up and put in different modules and stuff.
+// TODO: Start the sveltekit site.
